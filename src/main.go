@@ -53,6 +53,8 @@ func serve(con *net.TCPConn) {
 
 	defer con.Close()
 
+	fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
+
 	line, _ := readUntilCrLf(con)
 
 	fmt.Printf(string(line))
