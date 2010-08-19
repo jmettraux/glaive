@@ -22,10 +22,10 @@ task :format do
   end
 end
 
-task :test do
-
-  sh "gotest" rescue nil
-end
+#task :test do
+#  sh "gotest" rescue nil
+#end
+  # wants a Makefile :-(
 
 task :serve => :build do
 
