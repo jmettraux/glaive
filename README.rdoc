@@ -1,0 +1,27 @@
+
+= glaive
+
+a golang experiment
+
+
+== [un]features
+
+- key
+- each record is a JSON file
+
+
+== API
+
+PUT {type}\r\n json \r\r
+DELETE {type} {key}
+KEYS {type}
+GET {type} {key}
+GET_MANY {type} {regex} [opts]
+GET_MANY {type} {key0} {keyn}* [opts]
+
+GET_MANY continuous ?
+
+== license
+
+MIT
+
