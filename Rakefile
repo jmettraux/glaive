@@ -27,6 +27,10 @@ end
 #end
   # wants a Makefile :-(
 
+task :test => :build do
+  require 'test/test'
+end
+
 task :serve => :build do
 
   sh "./glaive"
