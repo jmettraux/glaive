@@ -9,7 +9,7 @@ import (
 
 type message struct {
 	message string
-	channel chan message
+	channel chan *message
 }
 
 var bus = make(chan *message, 77)
@@ -60,13 +60,19 @@ func serve(con *net.TCPConn) {
 
 	defer con.Close()
 
+    serviceChannel := make(chan *message)
+
 	fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
 
 	line, _ := readUntilCrLf(con)
 
 	//fmt.Printf(string(line))
-	bus <- &message{message: string(line), channel: nil}
+	bus <- &message{ string(line), serviceChannel }
 	//bus <- &message{ message: "a" }
+
+    answer := <-serviceChannel
+
+    con.Write([]byte(answer.message))
 }
 
 func listen() {
@@ -94,7 +100,8 @@ func listen() {
 func dictionary() {
 	for {
 		m := <-bus
-		fmt.Printf("BUS : %s", m.message)
+		//fmt.Printf("BUS : %s", m.message)
+        m.channel <- &message{ m.message, nil }
 	}
 }
 

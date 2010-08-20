@@ -19,7 +19,8 @@ class GetPutTest < Test::Unit::TestCase
   end
 
   def test_get
-    @con.puts("nada")
+    @con.write("put car bmw\r\n")
+    assert_equal 'put car bmw', @con.gets
   end
 end
 

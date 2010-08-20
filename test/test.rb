@@ -1,3 +1,3 @@
 
-Dir.glob(File.join(File.dirname(__FILE__), 't_*.rb')).sort.each { |t| load(t) }
+Dir.glob(File.join(File.dirname(__FILE__), 'gt_*.rb')).sort.each { |t| load(t) }
 
