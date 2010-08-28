@@ -53,9 +53,13 @@ func readUntilCrLf(con *net.TCPConn) (line []byte, err os.Error) {
 	return data, nil
 }
 
-func doGet(con *net.TCPConn, args []string) {
-	con.Write([]byte(args[0]))
+func writeLine(con *net.TCPConn, line string) {
+	con.Write([]byte(line))
 	con.Write([]byte("\r\n"))
+}
+
+func doGet(con *net.TCPConn, args []string) {
+	writeLine(con, args[0])
 }
 
 var commands = map[string]func(*net.TCPConn, []string){"get": doGet}
@@ -79,7 +83,7 @@ func serve(con *net.TCPConn) {
 		command := tokens[0]
 
 		if command == "quit" {
-			con.Write([]byte("\"bye.\"\r\n"))
+			writeLine(con, "\"bye.\"")
 			con.Close()
 			break
 		}
@@ -88,8 +92,8 @@ func serve(con *net.TCPConn) {
 		if ok {
 			f(con, tokens[1:])
 		} else {
-			con.Write([]byte(fmt.Sprintf(
-				"\"unknown command '%s'\"\r\n", command)))
+			writeLine(
+				con, fmt.Sprintf("\"unknown command '%s'\"", command))
 		}
 	}
 }
