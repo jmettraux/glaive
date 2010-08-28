@@ -14,10 +14,6 @@ type message struct {
 
 var bus = make(chan *message, 77)
 
-func die(msg string, err os.Error) {
-	fmt.Fprintf(os.Stderr, "fatal error : %s%v\n", msg, err)
-	os.Exit(1)
-}
 func error(msg string, err os.Error) {
 	fmt.Fprintf(os.Stderr, "error : %s%v\n", msg, err)
 }
@@ -79,12 +75,12 @@ func listen() {
 
 	addr, err := net.ResolveTCPAddr("127.0.0.1:5555")
 	if err != nil {
-		die("failed to resolve TCP address", err)
+		panic("failed to resolve TCP address")
 	}
 
 	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		die("failed to listen on TCP address", err)
+		panic("failed to listen on TCP address")
 	}
 
 	for {
