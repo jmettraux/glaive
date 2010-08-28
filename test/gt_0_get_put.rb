@@ -18,9 +18,20 @@ class GetPutTest < Test::Unit::TestCase
     end
   end
 
+  def test_quit
+    @con.write("quit\r\n")
+    assert_equal "\"bye.\"\r\n", @con.gets
+    assert_nil @con.gets
+  end
+
+  def test_unknown_command
+    @con.write("nanka\r\n")
+    assert_equal "\"unknown command 'nanka'\"\r\n", @con.gets
+  end
+
   def test_get
-    @con.write("put car bmw\r\n")
-    assert_equal 'put car bmw', @con.gets
+    @con.write("get car\r\n")
+    assert_equal "car\r\n", @con.gets
   end
 end
 

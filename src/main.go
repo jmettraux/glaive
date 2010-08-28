@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"bytes"
+	"strings"
 )
 
 type message struct {
@@ -12,7 +13,7 @@ type message struct {
 	channel chan *message
 }
 
-var bus = make(chan *message, 77)
+var reservationChannel = make(chan *message, 77)
 
 func error(msg string, err os.Error) {
 	fmt.Fprintf(os.Stderr, "error : %s%v\n", msg, err)
@@ -52,23 +53,45 @@ func readUntilCrLf(con *net.TCPConn) (line []byte, err os.Error) {
 	return data, nil
 }
 
+func doGet(con *net.TCPConn, args []string) {
+	con.Write([]byte(args[0]))
+	con.Write([]byte("\r\n"))
+}
+
+var commands = map[string]func(*net.TCPConn, []string){"get": doGet}
+
 func serve(con *net.TCPConn) {
-
-	defer con.Close()
-
-    serviceChannel := make(chan *message)
 
 	fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
 
-	line, _ := readUntilCrLf(con)
+	for {
 
-	//fmt.Printf(string(line))
-	bus <- &message{ string(line), serviceChannel }
-	//bus <- &message{ message: "a" }
+		line, err := readUntilCrLf(con)
 
-    answer := <-serviceChannel
+		if err != nil {
+			// TODO : pass error message
+			con.Write([]byte("\"internal error\"\r\n"))
+			continue
+		}
 
-    con.Write([]byte(answer.message))
+		tokens := strings.Split(string(line), " ", -1)
+
+		command := tokens[0]
+
+		if command == "quit" {
+			con.Write([]byte("\"bye.\"\r\n"))
+			con.Close()
+			break
+		}
+
+		f, ok := commands[command]
+		if ok {
+			f(con, tokens[1:])
+		} else {
+			con.Write([]byte(fmt.Sprintf(
+				"\"unknown command '%s'\"\r\n", command)))
+		}
+	}
 }
 
 func listen() {
@@ -93,16 +116,15 @@ func listen() {
 	}
 }
 
-func dictionary() {
+func manageReservations() {
 	for {
-		m := <-bus
-		//fmt.Printf("BUS : %s", m.message)
-        m.channel <- &message{ m.message, nil }
+		m := <-reservationChannel
+		m.channel <- &message{m.message, nil}
 	}
 }
 
 func main() {
 
-	go dictionary()
+	go manageReservations()
 	listen()
 }
