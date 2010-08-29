@@ -73,16 +73,24 @@ type right struct {
 func (r right) key() string {
 	return r.typ + "//" + r.id
 }
+
 func (r right) put(d *document) interface{} {
-	doc := fetch(d.typ(), d.id())
+	typ, id := d.typ(), d.id()
+	doc := fetch(typ, id)
 	if doc == nil && d.rev() != 0 {
 		return true
 	}
 	if doc != nil && doc.rev() != d.rev() {
 		return doc
 	}
+	err := os.MkdirAll(pathFor(typ, id), 0755)
+	fmt.Printf("%v", err)
+	j, _ := json.Marshal(d)
+	fmt.Println(fileFor(typ, id))
+	ioutil.WriteFile(fileFor(typ, id), j, 0755)
 	return d.rev() + 1
 }
+
 func (r right) delete(rev int64) *interface{} {
 	return nil
 }
@@ -162,7 +170,7 @@ func doPut(con *net.TCPConn, args []string) {
 	json.Unmarshal(data, doc)
 	right := reserve(doc.typ(), doc.id()) // blocking
 	result := right.put(doc)
-    writeJson(con, result)
+	writeJson(con, result)
 }
 
 var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}
