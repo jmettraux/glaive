@@ -28,8 +28,8 @@ func (d document) typ() string {
 	return v
 }
 func (d document) rev() int64 {
-	v, _ := d["_rev"].(int64)
-	return v
+	v, _ := d["_rev"].(float64)
+	return int64(v)
 }
 func (d document) id() string {
 	v, _ := d["_id"].(string)
@@ -51,7 +51,6 @@ func fileFor(typ string, id string) string {
 }
 
 func fetch(typ string, id string) *document {
-	fmt.Println(pathFor(typ, id))
 	data, err := ioutil.ReadFile(fileFor(typ, id))
 	if err != nil {
 		return nil
@@ -75,20 +74,26 @@ func (r right) key() string {
 }
 
 func (r right) put(d *document) interface{} {
-	typ, id := d.typ(), d.id()
+
+	typ, id, rev := d.typ(), d.id(), d.rev()
 	doc := fetch(typ, id)
-	if doc == nil && d.rev() != 0 {
-		return true
+
+	if doc == nil && rev != 0 {
+		return -1
 	}
-	if doc != nil && doc.rev() != d.rev() {
+	if doc != nil && doc.rev() != rev {
 		return doc
 	}
 	err := os.MkdirAll(pathFor(typ, id), 0755)
-	fmt.Printf("%v", err)
+	if err != nil {
+		return -1
+	}
+
+	(*d)["_rev"] = rev + 1
 	j, _ := json.Marshal(d)
-	fmt.Println(fileFor(typ, id))
 	ioutil.WriteFile(fileFor(typ, id), j, 0755)
-	return d.rev() + 1
+
+	return rev + 1
 }
 
 func (r right) delete(rev int64) *interface{} {
@@ -150,20 +155,26 @@ func writeJsonString(con *net.TCPConn, s string) {
 }
 
 //
-// the commands
+// reserve and release
 
 func reserve(typ string, id string) *right {
 	feedback := make(chan *right)
 	reserveChannel <- &right{typ, id, feedback}
 	return <-feedback
 }
+
 func release(typ string, id string) {
 	releaseChannel <- &right{typ, id, nil}
 }
 
+//
+// the commands
+
 func doGet(con *net.TCPConn, args []string) {
-	writeJson(con, args[0])
+	doc := fetch(args[0], args[1])
+	writeJson(con, doc)
 }
+
 func doPut(con *net.TCPConn, args []string) {
 	data, _ := readUntilCrLf(con)
 	doc := new(document)
@@ -172,6 +183,7 @@ func doPut(con *net.TCPConn, args []string) {
 	result := right.put(doc)
 	writeJson(con, result)
 }
+
 func doPurge(con *net.TCPConn, args []string) {
 	err := os.RemoveAll(*dir)
 	if err != nil {
