@@ -39,11 +39,11 @@ type right struct {
 func (r right) key() string {
 	return r.typ + "//" + r.id
 }
-func (r right) put(d *document) (doc *document, failure bool) {
-	return nil, true
+func (r right) put(d *document) *interface{} {
+	return nil
 }
-func (r right) delete(rev int64) (doc *document, failure bool) {
-	return nil, true
+func (r right) delete(rev int64) *interface{} {
+	return nil
 }
 
 //
@@ -119,13 +119,10 @@ func doPut(con *net.TCPConn, args []string) {
 	data, _ := readUntilCrLf(con)
 	doc := new(document)
 	json.Unmarshal(data, doc)
-	typ := doc.typ()
-	id := doc.id()
-	var rev interface{}
-	rev = doc.rev()
-	r := reserve(typ, id)
-	fmt.Printf("%#v\n", r)
-	writeJson(con, &rev)
+	right := reserve(doc.typ(), doc.id()) // blocking
+	result := right.put(doc)
+	fmt.Printf("%#v\n", result)
+	writeJson(con, result)
 }
 
 var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}
@@ -199,7 +196,6 @@ func serve(con *net.TCPConn) {
 		command := tokens[0]
 
 		if command == "quit" {
-			//writeLine(con, "\"bye.\"")
 			writeJsonString(con, "bye.")
 			break
 		}
