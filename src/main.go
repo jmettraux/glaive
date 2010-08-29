@@ -6,6 +6,7 @@ import (
 	"os"
 	"bytes"
 	"strings"
+    "json"
 )
 
 type message struct {
@@ -61,8 +62,23 @@ func writeLine(con *net.TCPConn, line string) {
 func doGet(con *net.TCPConn, args []string) {
 	writeLine(con, args[0])
 }
+func doPut(con *net.TCPConn, args []string) {
+    data, _ := readUntilCrLf(con)
+    j := new(map[string]interface{})
+    fmt.Printf("%#v\n", *j)
+    json.Unmarshal(data, j)
+    fmt.Printf("%#v\n", *j)
+    for k, _ := range *j {
+      fmt.Printf("key : %#v %T\n", k, k)
+      v, _ := (*j)[k]
+      fmt.Printf("val : %#v", v)
+    }
+    //id, _ := *j["_id"]
+    //fmt.Printf("_id : %v", id)
+	writeLine(con, "0")
+}
 
-var commands = map[string]func(*net.TCPConn, []string){"get": doGet}
+var commands = map[string]func(*net.TCPConn, []string){ "get": doGet, "put": doPut }
 
 func serve(con *net.TCPConn) {
 

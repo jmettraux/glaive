@@ -1,6 +1,8 @@
 
 require 'socket'
 require 'test/unit'
+require 'yajl'
+require 'rufus-json'
 
 def start_glaive(opts={})
 
