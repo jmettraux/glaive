@@ -8,6 +8,7 @@ import (
 	"strings"
 	"json"
 	"flag"
+	"io/ioutil"
 )
 
 //
@@ -35,6 +36,31 @@ func (d document) id() string {
 	return v
 }
 
+// TODO : at some point, introduce a cache
+
+func pathFor(typ string, id string) string {
+	subdir := id
+	if len(id) > 1 {
+		subdir = id[len(id)-2:]
+	}
+	return strings.Join([]string{*dir, typ, subdir}, "/")
+}
+
+func fileFor(typ string, id string) string {
+	return strings.Join([]string{pathFor(typ, id), id + ".json"}, "/")
+}
+
+func fetch(typ string, id string) *document {
+	fmt.Println(pathFor(typ, id))
+	data, err := ioutil.ReadFile(fileFor(typ, id))
+	if err != nil {
+		return nil
+	}
+	doc := new(document)
+	json.Unmarshal(data, doc)
+	return doc
+}
+
 //
 // right
 
@@ -47,8 +73,15 @@ type right struct {
 func (r right) key() string {
 	return r.typ + "//" + r.id
 }
-func (r right) put(d *document) *interface{} {
-	return nil
+func (r right) put(d *document) interface{} {
+	doc := fetch(d.typ(), d.id())
+	if doc == nil && d.rev() != 0 {
+		return true
+	}
+	if doc != nil && doc.rev() != d.rev() {
+		return doc
+	}
+	return d.rev() + 1
 }
 func (r right) delete(rev int64) *interface{} {
 	return nil
@@ -99,7 +132,7 @@ func readUntilCrLf(con *net.TCPConn) (line []byte, err os.Error) {
 //	con.Write([]byte(line))
 //	con.Write([]byte("\r\n"))
 //}
-func writeJson(con *net.TCPConn, data *interface{}) {
+func writeJson(con *net.TCPConn, data interface{}) {
 	bytes, _ := json.Marshal(data)
 	con.Write(bytes)
 	con.Write([]byte("\r\n"))
@@ -129,8 +162,7 @@ func doPut(con *net.TCPConn, args []string) {
 	json.Unmarshal(data, doc)
 	right := reserve(doc.typ(), doc.id()) // blocking
 	result := right.put(doc)
-	fmt.Printf("%#v\n", result)
-	writeJson(con, result)
+    writeJson(con, result)
 }
 
 var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}

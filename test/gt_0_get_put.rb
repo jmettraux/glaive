@@ -40,7 +40,7 @@ class GetPutTest < Test::Unit::TestCase
       'type' => 'car', '_id' => 'bmw'
     }))
     @con.write("\r\n")
-    assert_equal "0\r\n", @con.gets
+    assert_equal "1\r\n", @con.gets
   end
 
   def test_put_new_rev
@@ -49,7 +49,7 @@ class GetPutTest < Test::Unit::TestCase
       'type' => 'car', '_id' => 'benz', '_rev' => 1
     }))
     @con.write("\r\n")
-    assert_equal "1\r\n", @con.gets
+    assert_equal "false\r\n", @con.gets
   end
 end
 
