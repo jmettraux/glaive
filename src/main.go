@@ -7,7 +7,15 @@ import (
 	"bytes"
 	"strings"
 	"json"
+	"flag"
 )
+
+//
+// command-line args
+
+var host = flag.String("h", "127.0.0.1", "host")
+var port = flag.Int("p", 5555, "port")
+var dir = flag.String("d", "data", "glaive data dir")
 
 //
 // document
@@ -211,7 +219,11 @@ func serve(con *net.TCPConn) {
 
 func listen() {
 
-	addr, err := net.ResolveTCPAddr("127.0.0.1:5555")
+	hostAndPort := fmt.Sprintf("%s:%d", *host, *port)
+
+	fmt.Printf("listening on %s\n", hostAndPort)
+
+	addr, err := net.ResolveTCPAddr(hostAndPort)
 	if err != nil {
 		panic("failed to resolve TCP address")
 	}
@@ -232,6 +244,8 @@ func listen() {
 }
 
 func main() {
+
+	flag.Parse()
 
 	go manageReservations()
 	listen()
