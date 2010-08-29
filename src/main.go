@@ -17,6 +17,7 @@ import (
 var host = flag.String("h", "127.0.0.1", "host")
 var port = flag.Int("p", 5555, "port")
 var dir = flag.String("d", "data", "glaive data dir")
+var verbose = flag.Bool("v", false, "verbose")
 
 //
 // document
@@ -247,7 +248,9 @@ func serve(con *net.TCPConn) {
 
 	defer con.Close()
 
-	fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
+    if *verbose {
+	  fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
+    }
 
 	for {
 
@@ -281,7 +284,9 @@ func listen() {
 
 	hostAndPort := fmt.Sprintf("%s:%d", *host, *port)
 
-	fmt.Printf("listening on %s\n", hostAndPort)
+    if *verbose {
+	  fmt.Printf("listening on %s\n", hostAndPort)
+    }
 
 	addr, err := net.ResolveTCPAddr(hostAndPort)
 	if err != nil {
