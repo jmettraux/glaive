@@ -7,8 +7,7 @@ class GetPutTest < Test::Unit::TestCase
     $pid ||= start_glaive
     sleep 0.077
     @con = connect
-    @con.write("purge\r\n")
-    @con.gets
+    @con.purge
   end
 
   def teardown
@@ -50,6 +49,20 @@ class GetPutTest < Test::Unit::TestCase
     assert_equal(
       { 'type' => 'car', '_id' => 'bmw', '_rev' => 1 },
       @con.put({ 'type' => 'car', '_id' => 'bmw' }))
+  end
+
+  def test_delete_missing
+    assert_equal -1, @con.delete('car', 'benz', 1)
+  end
+
+  def test_delete_wrong_rev
+    assert_equal 1, @con.put({ 'type' => 'car', '_id' => 'bmw' })
+    assert_equal -1, @con.delete('car', 'benz', 2)
+  end
+
+  def test_delete
+    assert_equal 1, @con.put({ 'type' => 'car', '_id' => 'bmw' })
+    assert_equal 1, @con.delete('car', 'bmw', 1)
   end
 end
 

@@ -1,3 +1,27 @@
+//
+// Copyright (c) 2010, John Mettraux, jmettraux@gmail.com
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+// Made in Japan.
+//
+
 package main
 
 import (
@@ -9,6 +33,7 @@ import (
 	"json"
 	"flag"
 	"io/ioutil"
+	"strconv"
 )
 
 //
@@ -87,18 +112,35 @@ func (r right) put(d *document) interface{} {
 	}
 	err := os.MkdirAll(pathFor(typ, id), 0755)
 	if err != nil {
-		return -1
+		return "failed to create dir(s)"
 	}
 
 	(*d)["_rev"] = rev + 1
 	j, _ := json.Marshal(d)
-	ioutil.WriteFile(fileFor(typ, id), j, 0755)
+
+	err = ioutil.WriteFile(fileFor(typ, id), j, 0755)
+	if err != nil {
+		return "failed to save file"
+	}
 
 	return rev + 1
 }
 
-func (r right) delete(rev int64) *interface{} {
-	return nil
+func (r right) delete(rev int64) interface{} {
+
+	doc := fetch(r.typ, r.id)
+
+	if doc == nil {
+		return -1
+	}
+	if doc.rev() != rev {
+		return doc
+	}
+	err := os.Remove(fileFor(r.typ, r.id))
+	if err != nil {
+		return fmt.Sprintf("failed to remove %s/%s/%d", r.typ, r.id, rev)
+	}
+	return rev
 }
 
 //
@@ -153,9 +195,6 @@ func writeJson(con *net.TCPConn, data interface{}) {
 	con.Write(bytes)
 	con.Write([]byte("\r\n"))
 }
-func writeJsonString(con *net.TCPConn, s string) {
-	con.Write([]byte(fmt.Sprintf("\"%s\"\r\n", s)))
-}
 
 //
 // reserve and release
@@ -173,23 +212,8 @@ func release(typ string, id string) {
 //
 // the commands
 
-func doGet(con *net.TCPConn, args []string) {
-	doc := fetch(args[0], args[1])
-	writeJson(con, doc)
-}
-
-func doPut(con *net.TCPConn, args []string) {
-	data, _ := readUntilCrLf(con)
-	doc := new(document)
-	json.Unmarshal(data, doc)
-	typ, id := doc.typ(), doc.id()
-	right := reserve(typ, id) // blocking
-	result := right.put(doc)
-	release(typ, id)
-	writeJson(con, result)
-}
-
 func doPurge(con *net.TCPConn, args []string) {
+
 	err := os.RemoveAll(*dir)
 	if err != nil {
 		writeJson(con, fmt.Sprintf("something went wrong : %v", err))
@@ -198,7 +222,44 @@ func doPurge(con *net.TCPConn, args []string) {
 	}
 }
 
-var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "purge": doPurge}
+func doGet(con *net.TCPConn, args []string) {
+
+	doc := fetch(args[0], args[1])
+
+	writeJson(con, doc)
+}
+
+func doPut(con *net.TCPConn, args []string) {
+
+	data, _ := readUntilCrLf(con)
+	doc := new(document)
+	json.Unmarshal(data, doc)
+
+	typ, id := doc.typ(), doc.id()
+	right := reserve(typ, id) // blocking
+	result := right.put(doc)
+	release(typ, id)
+
+	writeJson(con, result)
+}
+
+func doDelete(con *net.TCPConn, args []string) {
+
+	rev, err := strconv.Atoi64(args[2])
+	if err != nil {
+		writeJson(con, fmt.Sprintf("revision '%v' is not an integer", args[2]))
+		return
+	}
+	typ, id := args[0], args[1]
+
+	right := reserve(typ, id) // blocking
+	result := right.delete(rev)
+	release(typ, id)
+
+	writeJson(con, result)
+}
+
+var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "purge": doPurge, "delete": doDelete}
 
 //
 // reservations
@@ -276,7 +337,7 @@ func serve(con *net.TCPConn) {
 		command := tokens[0]
 
 		if command == "quit" {
-			writeJsonString(con, "bye.")
+			writeJson(con, "bye.")
 			break
 		}
 
@@ -284,7 +345,7 @@ func serve(con *net.TCPConn) {
 		if ok {
 			f(con, tokens[1:])
 		} else {
-			writeJsonString(con, fmt.Sprintf("unknown command '%s'", command))
+			writeJson(con, fmt.Sprintf("unknown command '%s'", command))
 		}
 	}
 }

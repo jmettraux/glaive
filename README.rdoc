@@ -12,8 +12,9 @@ a golang experiment
 
 == API
 
-PUT {type}\r\n json \r\r
-GET {type} {key}\r\n
+put {type}\r\n {json_doc}\r\n
+get {type} {key}\r\n
+delete {type} {key}\r\n
 
 
 == license

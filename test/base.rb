@@ -46,6 +46,14 @@ def connect
     def get(type, id)
       emit([ 'get', type, id ])
     end
+
+    def purge
+      emit('purge')
+    end
+
+    def delete(type, id, rev)
+      emit([ 'delete', type, id, rev ])
+    end
   end
 
   con
