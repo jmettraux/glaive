@@ -7,6 +7,8 @@ class GetPutTest < Test::Unit::TestCase
     $pid ||= start_glaive
     sleep 0.077
     @con = connect
+    @con.write("purge\r\n")
+    @con.gets
   end
 
   def teardown

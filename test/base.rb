@@ -9,7 +9,7 @@ def start_glaive(opts={})
   no_kill = opts.delete(:no_kill)
 
   cpid = Process.fork do
-    exec './glaive'
+    exec './glaive -d data_test'
   end
 
   unless no_kill

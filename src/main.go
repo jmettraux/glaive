@@ -162,7 +162,7 @@ func release(typ string, id string) {
 }
 
 func doGet(con *net.TCPConn, args []string) {
-	writeJsonString(con, args[0])
+	writeJson(con, args[0])
 }
 func doPut(con *net.TCPConn, args []string) {
 	data, _ := readUntilCrLf(con)
@@ -172,8 +172,16 @@ func doPut(con *net.TCPConn, args []string) {
 	result := right.put(doc)
 	writeJson(con, result)
 }
+func doPurge(con *net.TCPConn, args []string) {
+	err := os.RemoveAll(*dir)
+	if err != nil {
+		writeJson(con, fmt.Sprintf("something went wrong : %v", err))
+	} else {
+		writeJson(con, "ok")
+	}
+}
 
-var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}
+var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "purge": doPurge}
 
 //
 // reservations
