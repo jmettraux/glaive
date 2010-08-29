@@ -4,8 +4,10 @@ require File.join(File.dirname(__FILE__), 'base.rb')
 class GetPutTest < Test::Unit::TestCase
 
   def setup
-    $pid ||= start_glaive
-    sleep 0.077
+    unless $pid
+      $pid = start_glaive
+      sleep 0.077
+    end
     @con = connect
     @con.purge
   end
