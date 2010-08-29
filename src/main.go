@@ -107,6 +107,8 @@ var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPu
 
 func serve(con *net.TCPConn) {
 
+	defer con.Close()
+
 	fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
 
 	for {
@@ -126,7 +128,6 @@ func serve(con *net.TCPConn) {
 		if command == "quit" {
 			//writeLine(con, "\"bye.\"")
 			writeJsonString(con, "bye.")
-			con.Close()
 			break
 		}
 
