@@ -9,12 +9,27 @@ import (
 	"json"
 )
 
-type message struct {
-	message string
-	channel chan *message
+type document map[string]interface{}
+
+type reservation struct {
+	typ string
+	id  string
 }
 
-var reservationChannel = make(chan *message, 77)
+type request struct {
+	typ     string
+	id      string
+	channel chan *reservation
+}
+
+func (r reservation) put(d *document) (doc *document, failure bool) {
+	return nil, true
+}
+func (r reservation) delete(rev int64) (doc *document, failure bool) {
+	return nil, true
+}
+
+var reservationChannel = make(chan *request, 77)
 
 func error(msg string, err os.Error) {
 	fmt.Fprintf(os.Stderr, "error : %s%v\n", msg, err)
@@ -67,12 +82,15 @@ func writeJsonString(con *net.TCPConn, s string) {
 	con.Write([]byte(fmt.Sprintf("\"%s\"\r\n", s)))
 }
 
+//
+// the commands
+
 func doGet(con *net.TCPConn, args []string) {
 	writeJsonString(con, args[0])
 }
 func doPut(con *net.TCPConn, args []string) {
 	data, _ := readUntilCrLf(con)
-	doc := new(map[string]interface{})
+	doc := new(document)
 	json.Unmarshal(data, doc)
 	//id, found := (*doc)["_id"]
 	rev, found := (*doc)["_rev"]
@@ -83,6 +101,9 @@ func doPut(con *net.TCPConn, args []string) {
 }
 
 var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}
+
+//
+// serving
 
 func serve(con *net.TCPConn) {
 
@@ -142,8 +163,8 @@ func listen() {
 
 func manageReservations() {
 	for {
-		m := <-reservationChannel
-		m.channel <- &message{m.message, nil}
+		<-reservationChannel
+		//m.channel <- &request{m.message, nil}
 	}
 }
 
