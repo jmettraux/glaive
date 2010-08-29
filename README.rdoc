@@ -12,6 +12,9 @@ a golang experiment
 
 == API
 
+All replies are encoded in JSON.
+Returns a string in case of error.
+
 put {type}\r\n {json_doc}\r\n
 get {type} {key}\r\n
 delete {type} {key}\r\n

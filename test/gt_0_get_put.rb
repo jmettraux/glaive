@@ -26,8 +26,7 @@ class GetPutTest < Test::Unit::TestCase
   end
 
   def test_unknown_command
-    @con.write("nanka\r\n")
-    assert_equal "\"unknown command 'nanka'\"\r\n", @con.gets
+    assert_equal "unknown command 'nanka'", @con.emit("nanka")
   end
 
   def test_get
@@ -63,6 +62,15 @@ class GetPutTest < Test::Unit::TestCase
   def test_delete
     assert_equal 1, @con.put({ 'type' => 'car', '_id' => 'bmw' })
     assert_equal 1, @con.delete('car', 'bmw', 1)
+  end
+
+  def test_utf_8
+    assert_equal(
+      1,
+      @con.put({ 'type' => 'car', '_id' => 'トヨタ' }))
+    assert_equal(
+      { 'type' => 'car', '_id' => 'トヨタ', '_rev' => 1 },
+      @con.get('car', 'トヨタ'))
   end
 end
 
