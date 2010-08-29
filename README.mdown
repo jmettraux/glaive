@@ -1,0 +1,27 @@
+
+# glaive
+
+A 'golang' experiment.
+
+It's a naive key-value store, where values are JSON documents. Those documents are expected to have a "type", an "_id" and glaive adds an integer "_rev" (revision) to them (yes, this is CouchDB-inspired).
+
+Documents are stored on disk, in a hierarchy {type}/{subdir}/{id}.json where subdir is the last two chars of the id.
+
+A client when putting or deleting a document is expected to provide the current _rev, else the operation (put or delete) fails and the current version of the document is returned.
+
+
+## API
+
+All replies are encoded in JSON.
+Returns a string in case of error.
+
+* put {type}\r\n {json_doc}\r\n
+* get {type} {key}\r\n
+* delete {type} {key}\r\n
+* get_many {type} [regex]\r\n
+
+
+## license
+
+MIT
+
