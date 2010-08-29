@@ -43,12 +43,13 @@ class GetPutTest < Test::Unit::TestCase
     assert_equal -1, @con.put({ 'type' => 'car', '_id' => 'bmw', '_rev' => 1 })
   end
 
-  #def test_put_reput
-  #  @con.write("put\r\n")
-  #  @con.write(Rufus::Json.encode({
-  #    'type' => 'car', '_id' => 'bmw'
-  #  }))
-  #  @con.write("\r\n")
-  #end
+  def test_put_reput
+    assert_equal(
+      1,
+      @con.put({ 'type' => 'car', '_id' => 'bmw' }))
+    assert_equal(
+      { 'type' => 'car', '_id' => 'bmw', '_rev' => 1 },
+      @con.put({ 'type' => 'car', '_id' => 'bmw' }))
+  end
 end
 
