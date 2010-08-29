@@ -104,6 +104,8 @@ func (r right) delete(rev int64) *interface{} {
 //
 // misc
 
+func p(i interface{}) { fmt.Printf("%#v\n", i) }
+
 func error(msg string, err os.Error) {
 	fmt.Fprintf(os.Stderr, "error : %s%v\n", msg, err)
 }
@@ -180,8 +182,10 @@ func doPut(con *net.TCPConn, args []string) {
 	data, _ := readUntilCrLf(con)
 	doc := new(document)
 	json.Unmarshal(data, doc)
-	right := reserve(doc.typ(), doc.id()) // blocking
+	typ, id := doc.typ(), doc.id()
+	right := reserve(typ, id) // blocking
 	result := right.put(doc)
+	release(typ, id)
 	writeJson(con, result)
 }
 
@@ -203,8 +207,10 @@ var reserveChannel = make(chan *right)
 var releaseChannel = make(chan *right)
 
 func manageReservations() {
+
 	var reserved = make(map[string]*right)
 	var waiting = make(map[string]chan *right)
+
 	for {
 		select {
 		case reservation := <-reserveChannel:
@@ -216,6 +222,9 @@ func manageReservations() {
 				// someone is already on it, let's wait
 				//
 				waiting[key] = reservation.channel, true
+
+				// TODO : waiting expiration...
+
 			} else {
 				//
 				// document is free, let's hand the reservation
@@ -248,9 +257,9 @@ func serve(con *net.TCPConn) {
 
 	defer con.Close()
 
-    if *verbose {
-	  fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
-    }
+	if *verbose {
+		fmt.Fprintf(os.Stdout, "serving %s\n", con.RemoteAddr().String())
+	}
 
 	for {
 
@@ -284,9 +293,9 @@ func listen() {
 
 	hostAndPort := fmt.Sprintf("%s:%d", *host, *port)
 
-    if *verbose {
-	  fmt.Printf("listening on %s\n", hostAndPort)
-    }
+	if *verbose {
+		fmt.Printf("listening on %s\n", hostAndPort)
+	}
 
 	addr, err := net.ResolveTCPAddr(hostAndPort)
 	if err != nil {
