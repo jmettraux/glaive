@@ -64,18 +64,14 @@ func doGet(con *net.TCPConn, args []string) {
 }
 func doPut(con *net.TCPConn, args []string) {
     data, _ := readUntilCrLf(con)
-    j := new(map[string]interface{})
-    fmt.Printf("%#v\n", *j)
-    json.Unmarshal(data, j)
-    fmt.Printf("%#v\n", *j)
-    for k, _ := range *j {
-      fmt.Printf("key : %#v %T\n", k, k)
-      v, _ := (*j)[k]
-      fmt.Printf("val : %#v", v)
+    doc := new(map[string]interface{})
+    json.Unmarshal(data, doc)
+    //id, found := (*doc)["_id"]
+    rev, found := (*doc)["_rev"]
+    if ! found {
+      rev = 0
     }
-    //id, _ := *j["_id"]
-    //fmt.Printf("_id : %v", id)
-	writeLine(con, "0")
+	writeLine(con, fmt.Sprintf("%v", rev))
 }
 
 var commands = map[string]func(*net.TCPConn, []string){ "get": doGet, "put": doPut }

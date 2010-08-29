@@ -42,5 +42,14 @@ class GetPutTest < Test::Unit::TestCase
     @con.write("\r\n")
     assert_equal "0\r\n", @con.gets
   end
+
+  def test_put_new_rev
+    @con.write("put car\r\n")
+    @con.write(Rufus::Json.encode({
+      '_id' => 'benz', '_rev' => 1
+    }))
+    @con.write("\r\n")
+    assert_equal "1\r\n", @con.gets
+  end
 end
 
