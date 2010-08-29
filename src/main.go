@@ -6,7 +6,7 @@ import (
 	"os"
 	"bytes"
 	"strings"
-    "json"
+	"json"
 )
 
 type message struct {
@@ -54,27 +54,35 @@ func readUntilCrLf(con *net.TCPConn) (line []byte, err os.Error) {
 	return data, nil
 }
 
-func writeLine(con *net.TCPConn, line string) {
-	con.Write([]byte(line))
+//func writeLine(con *net.TCPConn, line string) {
+//	con.Write([]byte(line))
+//	con.Write([]byte("\r\n"))
+//}
+func writeJson(con *net.TCPConn, data *interface{}) {
+	bytes, _ := json.Marshal(data)
+	con.Write(bytes)
 	con.Write([]byte("\r\n"))
+}
+func writeJsonString(con *net.TCPConn, s string) {
+	con.Write([]byte(fmt.Sprintf("\"%s\"\r\n", s)))
 }
 
 func doGet(con *net.TCPConn, args []string) {
-	writeLine(con, args[0])
+	writeJsonString(con, args[0])
 }
 func doPut(con *net.TCPConn, args []string) {
-    data, _ := readUntilCrLf(con)
-    doc := new(map[string]interface{})
-    json.Unmarshal(data, doc)
-    //id, found := (*doc)["_id"]
-    rev, found := (*doc)["_rev"]
-    if ! found {
-      rev = 0
-    }
-	writeLine(con, fmt.Sprintf("%v", rev))
+	data, _ := readUntilCrLf(con)
+	doc := new(map[string]interface{})
+	json.Unmarshal(data, doc)
+	//id, found := (*doc)["_id"]
+	rev, found := (*doc)["_rev"]
+	if !found {
+		rev = 0
+	}
+	writeJson(con, &rev)
 }
 
-var commands = map[string]func(*net.TCPConn, []string){ "get": doGet, "put": doPut }
+var commands = map[string]func(*net.TCPConn, []string){"get": doGet, "put": doPut}
 
 func serve(con *net.TCPConn) {
 
@@ -95,7 +103,8 @@ func serve(con *net.TCPConn) {
 		command := tokens[0]
 
 		if command == "quit" {
-			writeLine(con, "\"bye.\"")
+			//writeLine(con, "\"bye.\"")
+			writeJsonString(con, "bye.")
 			con.Close()
 			break
 		}
@@ -104,8 +113,7 @@ func serve(con *net.TCPConn) {
 		if ok {
 			f(con, tokens[1:])
 		} else {
-			writeLine(
-				con, fmt.Sprintf("\"unknown command '%s'\"", command))
+			writeJsonString(con, fmt.Sprintf("unknown command '%s'", command))
 		}
 	}
 }

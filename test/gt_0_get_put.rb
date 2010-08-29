@@ -31,7 +31,7 @@ class GetPutTest < Test::Unit::TestCase
 
   def test_get
     @con.write("get car\r\n")
-    assert_equal "car\r\n", @con.gets
+    assert_equal "\"car\"\r\n", @con.gets
   end
 
   def test_put
