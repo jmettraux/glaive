@@ -224,9 +224,40 @@ func doPurge(con *net.TCPConn, args []string) {
 
 func doGet(con *net.TCPConn, args []string) {
 
+    if len(args) < 2 {
+      writeJson(con, "usage : get {type} {id}")
+      return
+    }
+
 	doc := fetch(args[0], args[1])
 
 	writeJson(con, doc)
+}
+
+func doGetMany(con *net.TCPConn, args []string) {
+
+    if len(args) < 1 {
+      writeJson(con, "usage : get_many {type} [key]")
+      return
+    }
+
+    d := strings.Join([]string{*dir, args[0]}, "/")
+    fd, _ := os.Open(d, os.O_RDONLY, 0755)
+    defer fd.Close()
+
+    sds, _ := fd.Readdirnames(-1)
+
+    //ids := make([]string, 77 * len(sds))
+
+    for _, sd := range sds {
+      s := strings.Join([]string{*dir, args[0], sd}, "/")
+      fsd, _ := os.Open(s, os.O_RDONLY, 0755)
+      defer fsd.Close()
+      is, _ := fsd.Readdirnames(-1)
+      p(is)
+    }
+
+    writeJson(con, "ok")
 }
 
 func doPut(con *net.TCPConn, args []string) {
@@ -259,7 +290,7 @@ func doDelete(con *net.TCPConn, args []string) {
 	writeJson(con, result)
 }
 
-var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "purge": doPurge, "delete": doDelete}
+var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "get_many": doGetMany, "purge": doPurge, "delete": doDelete}
 
 //
 // reservations

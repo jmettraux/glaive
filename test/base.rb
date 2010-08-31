@@ -47,6 +47,12 @@ def connect
       emit([ 'get', type, id ])
     end
 
+    def get_many(type, key=nil)
+      a = [ 'get_many', type ]
+      a << key if key
+      emit(a)
+    end
+
     def purge
       emit('purge')
     end
