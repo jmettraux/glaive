@@ -3,11 +3,13 @@
 
 A 'golang' experiment.
 
-It's a naive key-value store, where values are JSON documents. Those documents are expected to have a "type", an "_id" and glaive adds an integer "_rev" (revision) to them (yes, this is CouchDB-inspired).
+It's a naive key-value store, where values are JSON documents. Those documents are expected to have a *type*, an *_id* and glaive adds an integer *_rev* (revision) to them (yes, this is CouchDB-inspired).
 
 Documents are stored on disk, in a hierarchy {type}/{subdir}/{id}.json where subdir is the last two chars of the id.
 
 A client when putting or deleting a document is expected to provide the current _rev, else the operation (put or delete) fails and the current version of the document is returned.
+
+Glaive is derived from work on "rufus-cloche":http://github.com/jmettraux/rufus-cloche (ruby) and "cloche":http://github.com/jmettraux/cloche (erlang).
 
 
 ## API
@@ -19,6 +21,17 @@ Returns a string in case of error.
 * get {type} {key}\r\n
 * delete {type} {key}\r\n
 * get_many {type} [regex]\r\n
+
+
+## running tests
+
+The tests for glaive are written in Ruby, they fork a glaive server manipulate it.
+
+    glaive $ rake test
+
+or
+
+    glaive $ ruby test/test.rb
 
 
 ## license

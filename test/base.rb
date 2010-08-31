@@ -59,3 +59,24 @@ def connect
   con
 end
 
+module GtBase
+
+  def setup
+    unless $pid
+      $pid = start_glaive
+      sleep 0.077
+    end
+    @con = connect
+    @con.purge
+  end
+
+  def teardown
+    begin
+      @con.close
+    rescue
+    ensure
+      @con = nil
+    end
+  end
+end
+

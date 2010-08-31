@@ -1,25 +1,10 @@
 
 require File.join(File.dirname(__FILE__), 'base.rb')
 
-class GetPutTest < Test::Unit::TestCase
 
-  def setup
-    unless $pid
-      $pid = start_glaive
-      sleep 0.077
-    end
-    @con = connect
-    @con.purge
-  end
+class GtBasicTest < Test::Unit::TestCase
 
-  def teardown
-    begin
-      @con.close
-    rescue
-    ensure
-      @con = nil
-    end
-  end
+  include GtBase
 
   def test_quit
     @con.write("quit\r\n")

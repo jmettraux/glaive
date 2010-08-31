@@ -1,4 +1,4 @@
 
 [ ] rspec maybe
-[ ] cache (off by default ?)
+[ ] cache (since the locks are in-memory)
 
