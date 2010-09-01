@@ -13,8 +13,8 @@ class GtGetManyTest < Test::Unit::TestCase
 
     assert_equal(
       [
-        { 'type' => 'bikes', '_id' => '2010', 'brand' => 'giant' },
-        { 'type' => 'bikes', '_id' => '2011', 'brand' => 'arrowjp' }
+        { 'type' => 'bikes', '_id' => '2010', 'brand' => 'giant', '_rev' => 1 },
+        { 'type' => 'bikes', '_id' => '2011', 'brand' => 'arrowjp', '_rev' => 1 }
       ],
       @con.get_many('bikes'))
   end

@@ -235,59 +235,65 @@ func doGet(con *net.TCPConn, args []string) {
 	writeJson(con, doc)
 }
 
+func listFiles(dirname string) []string {
+
+	infos, err := ioutil.ReadDir(dirname)
+
+	if err != nil {
+		return []string{}
+	}
+
+	result := make([]string, len(infos))
+
+	for index, info := range infos {
+		result[index] = info.Name
+	}
+
+	return result
+}
+
 func getLeaves(args []string, readLeaf bool) interface{} {
 
-	d := strings.Join([]string{*dir, args[0]}, "/")
-	fd, err := os.Open(d, os.O_RDONLY, 0755)
-
-	if err != nil {
-		return [...]interface{}{}
-	}
-
-	defer fd.Close()
-
-	sds, err := fd.Readdirnames(-1)
-
-	if err != nil {
-		return [...]interface{}{}
-	}
+	sds := listFiles(strings.Join([]string{*dir, args[0]}, "/"))
 
 	l := list.New()
 
 	for _, sd := range sds {
 
-		s := strings.Join([]string{*dir, args[0], sd}, "/")
-		fsd, err := os.Open(s, os.O_RDONLY, 0755)
-
-		if err != nil {
-			continue
-		}
-
-		defer fsd.Close()
-
-		is, err := fsd.Readdirnames(-1)
-
-		if err != nil {
-			continue
-		}
+		is := listFiles(strings.Join([]string{*dir, args[0], sd}, "/"))
 
 		for _, id := range is {
 			l.PushBack(id)
 		}
 	}
 
-	result := make([]string, l.Len())
+	e := l.Front()
+
+	if !readLeaf {
+
+		result := make([]string, l.Len())
+
+		for i := 0; i < l.Len(); i++ {
+
+			id, _ := e.Value.(string)
+			result[i] = id[0 : len(id)-5]
+
+			e = e.Next()
+		}
+
+		return result
+	}
+
+	result := make([]interface{}, l.Len())
+
+    // TODO : what if fetch returns null !!
 
 	for i := 0; i < l.Len(); i++ {
 
-		e := l.Front()
-
-		if e == nil {
-			break
-		}
-
 		id, _ := e.Value.(string)
-		result[i] = id
+		result[i] = fetch(args[0], id[0:len(id)-5])
+
+		e = e.Next()
 	}
 
 	return result
@@ -332,7 +338,12 @@ func doDelete(con *net.TCPConn, args []string) {
 	writeJson(con, result)
 }
 
-var commands = map[string]func(*net.TCPConn, []string){"put": doPut, "get": doGet, "get_many": doGetMany, "purge": doPurge, "delete": doDelete}
+var commands = map[string]func(*net.TCPConn, []string){
+	"put":      doPut,
+	"get":      doGet,
+	"get_many": doGetMany,
+	"purge":    doPurge,
+	"delete":   doDelete}
 
 //
 // reservations
