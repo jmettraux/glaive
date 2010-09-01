@@ -55,5 +55,10 @@ class GtBasicTest < Test::Unit::TestCase
       %w[ alfaromeo bmw saab volkswagen ],
       @con.ids('cars'))
   end
+
+  def test_ids_one_is_enough
+
+    assert_equal 'usage : ids {type}', @con.emit('ids cars one two')
+  end
 end
 

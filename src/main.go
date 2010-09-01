@@ -35,7 +35,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"container/list"
-    "sort"
+	"sort"
 )
 
 //
@@ -200,15 +200,15 @@ func writeJson(con *net.TCPConn, data interface{}) {
 type stringSlice []string
 
 func (s stringSlice) Len() int {
-  return len(s)
+	return len(s)
 }
 
 func (s stringSlice) Less(i, j int) bool {
-  return s[i] < s[j]
+	return s[i] < s[j]
 }
 
 func (s stringSlice) Swap(i, j int) {
-  s[i], s[j] = s[j], s[i]
+	s[i], s[j] = s[j], s[i]
 }
 
 //
@@ -268,6 +268,10 @@ func listFiles(dirname string) []string {
 
 func listIds(args []string) stringSlice {
 
+	if len(args) > 2 {
+		return args[1:]
+	}
+
 	sds := listFiles(strings.Join([]string{*dir, args[0]}, "/"))
 
 	l := list.New()
@@ -292,7 +296,7 @@ func listIds(args []string) stringSlice {
 		e = e.Next()
 	}
 
-    sort.Sort(result)
+	sort.Sort(result)
 
 	return result
 }
@@ -304,26 +308,26 @@ func doGetMany(con *net.TCPConn, args []string) {
 		return
 	}
 
-    ids := listIds(args)
+	ids := listIds(args)
 
-    docs := make([]interface{}, len(ids))
-    i := 0
+	docs := make([]interface{}, len(ids))
+	i := 0
 
-    for _, id := range ids {
-      doc := fetch(args[0], id)
-      if doc != nil {
-        docs[i] = doc
-        i = i + 1
-      }
-    }
+	for _, id := range ids {
+		doc := fetch(args[0], id)
+		if doc != nil {
+			docs[i] = doc
+			i = i + 1
+		}
+	}
 
-	writeJson(con, docs);
+	writeJson(con, docs)
 }
 
 func doIds(con *net.TCPConn, args []string) {
 
-	if len(args) < 1 {
-		writeJson(con, "usage : ids {type} [key]")
+	if len(args) != 1 {
+		writeJson(con, "usage : ids {type}")
 	} else {
 		writeJson(con, listIds(args))
 	}
