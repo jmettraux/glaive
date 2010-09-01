@@ -18,9 +18,22 @@ All replies are encoded in JSON.
 Returns a string in case of error.
 
 * put {type}\r\n {json_doc}\r\n
-* get {type} {key}\r\n
-* delete {type} {key}\r\n
+
+Stores a document. Expects the document to have a "type" and an "_id" attribute.
+
+* get {type} {id}\r\n
+
+Given a type and an id, returns the corresponding document or null if none.
+
+* delete {type} {id} {rev}\r\n
+
+Given a type, an id and a rev, deletes the corresponding document. Will return -1 if the document is already gone (or didn't previously exist). Will return the current doc if the rev given is wrong. In case of success returns the given rev.
+
 * get_many {type} [regex]\r\n
+
+* purge\r\n
+
+Removes all the documents in glaive. Dangerous.
 
 
 ## running tests

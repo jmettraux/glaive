@@ -2,4 +2,6 @@
 [x] rspec maybe
 [ ] cache (since the locks are in-memory)
 [ ] ids
+[ ] get_many {type} {id}* [opts]
+    where options is a JSON object
 

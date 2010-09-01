@@ -219,7 +219,7 @@ func doPurge(con *net.TCPConn, args []string) {
 	if err != nil {
 		writeJson(con, fmt.Sprintf("something went wrong : %v", err))
 	} else {
-		writeJson(con, "ok")
+		writeJson(con, 0)
 	}
 }
 
@@ -286,7 +286,7 @@ func getLeaves(args []string, readLeaf bool) interface{} {
 
 	result := make([]interface{}, l.Len())
 
-    // TODO : what if fetch returns null !!
+	// TODO : what if fetch returns null !!
 
 	for i := 0; i < l.Len(); i++ {
 
@@ -312,9 +312,20 @@ func doPut(con *net.TCPConn, args []string) {
 
 	data, _ := readUntilCrLf(con)
 	doc := new(document)
-	json.Unmarshal(data, doc)
+	err := json.Unmarshal(data, doc)
+
+	if err != nil {
+		writeJson(con, "failed to parse document, is it really a JSON Object ?")
+		return
+	}
 
 	typ, id := doc.typ(), doc.id()
+
+	if len(typ) < 1 || len(id) < 1 {
+		writeJson(con, "document is missing a \"type\" and/or \"_id\" attribute")
+		return
+	}
+
 	right := reserve(typ, id) // blocking
 	result := right.put(doc)
 	release(typ, id)
