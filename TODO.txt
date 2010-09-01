@@ -1,4 +1,5 @@
 
-[ ] rspec maybe
+[x] rspec maybe
 [ ] cache (since the locks are in-memory)
+[ ] ids
 

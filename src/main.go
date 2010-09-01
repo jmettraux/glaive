@@ -34,6 +34,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"strconv"
+	"container/list"
 )
 
 //
@@ -224,40 +225,81 @@ func doPurge(con *net.TCPConn, args []string) {
 
 func doGet(con *net.TCPConn, args []string) {
 
-    if len(args) < 2 {
-      writeJson(con, "usage : get {type} {id}")
-      return
-    }
+	if len(args) < 2 {
+		writeJson(con, "usage : get {type} {id}")
+		return
+	}
 
 	doc := fetch(args[0], args[1])
 
 	writeJson(con, doc)
 }
 
+func getLeaves(args []string, readLeaf bool) interface{} {
+
+	d := strings.Join([]string{*dir, args[0]}, "/")
+	fd, err := os.Open(d, os.O_RDONLY, 0755)
+
+	if err != nil {
+		return [...]interface{}{}
+	}
+
+	defer fd.Close()
+
+	sds, err := fd.Readdirnames(-1)
+
+	if err != nil {
+		return [...]interface{}{}
+	}
+
+	l := list.New()
+
+	for _, sd := range sds {
+
+		s := strings.Join([]string{*dir, args[0], sd}, "/")
+		fsd, err := os.Open(s, os.O_RDONLY, 0755)
+
+		if err != nil {
+			continue
+		}
+
+		defer fsd.Close()
+
+		is, err := fsd.Readdirnames(-1)
+
+		if err != nil {
+			continue
+		}
+
+		for _, id := range is {
+			l.PushBack(id)
+		}
+	}
+
+	result := make([]string, l.Len())
+
+	for i := 0; i < l.Len(); i++ {
+
+		e := l.Front()
+
+		if e == nil {
+			break
+		}
+
+		id, _ := e.Value.(string)
+		result[i] = id
+	}
+
+	return result
+}
+
 func doGetMany(con *net.TCPConn, args []string) {
 
-    if len(args) < 1 {
-      writeJson(con, "usage : get_many {type} [key]")
-      return
-    }
-
-    d := strings.Join([]string{*dir, args[0]}, "/")
-    fd, _ := os.Open(d, os.O_RDONLY, 0755)
-    defer fd.Close()
-
-    sds, _ := fd.Readdirnames(-1)
-
-    //ids := make([]string, 77 * len(sds))
-
-    for _, sd := range sds {
-      s := strings.Join([]string{*dir, args[0], sd}, "/")
-      fsd, _ := os.Open(s, os.O_RDONLY, 0755)
-      defer fsd.Close()
-      is, _ := fsd.Readdirnames(-1)
-      p(is)
-    }
-
-    writeJson(con, "ok")
+	if len(args) < 1 {
+		writeJson(con, "usage : get_many {type} [key]")
+	} else {
+		writeJson(con, getLeaves(args, true))
+	}
 }
 
 func doPut(con *net.TCPConn, args []string) {
