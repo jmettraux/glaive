@@ -35,6 +35,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"container/list"
+    "sort"
 )
 
 //
@@ -187,14 +188,27 @@ func readUntilCrLf(con *net.TCPConn) (line []byte, err os.Error) {
 	return data, nil
 }
 
-//func writeLine(con *net.TCPConn, line string) {
-//	con.Write([]byte(line))
-//	con.Write([]byte("\r\n"))
-//}
 func writeJson(con *net.TCPConn, data interface{}) {
 	bytes, _ := json.Marshal(data)
 	con.Write(bytes)
 	con.Write([]byte("\r\n"))
+}
+
+//
+// a sortable []string
+
+type stringSlice []string
+
+func (s stringSlice) Len() int {
+  return len(s)
+}
+
+func (s stringSlice) Less(i, j int) bool {
+  return s[i] < s[j]
+}
+
+func (s stringSlice) Swap(i, j int) {
+  s[i], s[j] = s[j], s[i]
 }
 
 //
@@ -252,7 +266,7 @@ func listFiles(dirname string) []string {
 	return result
 }
 
-func getLeaves(args []string, readLeaf bool) interface{} {
+func listIds(args []string) stringSlice {
 
 	sds := listFiles(strings.Join([]string{*dir, args[0]}, "/"))
 
@@ -267,34 +281,18 @@ func getLeaves(args []string, readLeaf bool) interface{} {
 		}
 	}
 
+	result := make(stringSlice, l.Len())
 	e := l.Front()
-
-	if !readLeaf {
-
-		result := make([]string, l.Len())
-
-		for i := 0; i < l.Len(); i++ {
-
-			id, _ := e.Value.(string)
-			result[i] = id[0 : len(id)-5]
-
-			e = e.Next()
-		}
-
-		return result
-	}
-
-	result := make([]interface{}, l.Len())
-
-	// TODO : what if fetch returns null !!
 
 	for i := 0; i < l.Len(); i++ {
 
 		id, _ := e.Value.(string)
-		result[i] = fetch(args[0], id[0:len(id)-5])
+		result[i] = id[0 : len(id)-5]
 
 		e = e.Next()
 	}
+
+    sort.Sort(result)
 
 	return result
 }
@@ -302,9 +300,32 @@ func getLeaves(args []string, readLeaf bool) interface{} {
 func doGetMany(con *net.TCPConn, args []string) {
 
 	if len(args) < 1 {
-		writeJson(con, "usage : get_many {type} [key]")
+		writeJson(con, "usage : get_many {type} {key}* [opts]")
+		return
+	}
+
+    ids := listIds(args)
+
+    docs := make([]interface{}, len(ids))
+    i := 0
+
+    for _, id := range ids {
+      doc := fetch(args[0], id)
+      if doc != nil {
+        docs[i] = doc
+        i = i + 1
+      }
+    }
+
+	writeJson(con, docs);
+}
+
+func doIds(con *net.TCPConn, args []string) {
+
+	if len(args) < 1 {
+		writeJson(con, "usage : ids {type} [key]")
 	} else {
-		writeJson(con, getLeaves(args, true))
+		writeJson(con, listIds(args))
 	}
 }
 
@@ -353,6 +374,7 @@ var commands = map[string]func(*net.TCPConn, []string){
 	"put":      doPut,
 	"get":      doGet,
 	"get_many": doGetMany,
+	"ids":      doIds,
 	"purge":    doPurge,
 	"delete":   doDelete}
 

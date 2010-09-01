@@ -53,6 +53,10 @@ def connect
       emit(a)
     end
 
+    def ids(type)
+      emit([ 'ids', type ])
+    end
+
     def purge
       emit('purge')
     end

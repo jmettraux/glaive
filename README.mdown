@@ -21,15 +21,24 @@ Returns a string in case of error.
 
 Stores a document. Expects the document to have a "type" and an "_id" attribute.
 
+
 * get {type} {id}\r\n
 
 Given a type and an id, returns the corresponding document or null if none.
+
 
 * delete {type} {id} {rev}\r\n
 
 Given a type, an id and a rev, deletes the corresponding document. Will return -1 if the document is already gone (or didn't previously exist). Will return the current doc if the rev given is wrong. In case of success returns the given rev.
 
+
 * get_many {type} [regex]\r\n
+
+
+* ids {type}
+
+Returns a list of all the ids stored for the given type.
+
 
 * purge\r\n
 
