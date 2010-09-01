@@ -12,6 +12,15 @@ A client when putting or deleting a document is expected to provide the current 
 Glaive is derived from work on "rufus-cloche":http://github.com/jmettraux/rufus-cloche (ruby) and "cloche":http://github.com/jmettraux/cloche (erlang).
 
 
+## philosophy (or lack of)
+
+Let's trust the filesystem.
+
+There is no dump.
+
+The indexes are in the document id.
+
+
 ## API
 
 All replies are encoded in JSON.
