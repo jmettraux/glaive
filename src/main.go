@@ -370,7 +370,12 @@ func doGetMany(con *net.TCPConn, args []string) {
 	}
 
 	offset := options.i("offset")
+	skip := options.i("skip")
 	limit := options.i("limit")
+
+    if skip > 0 {
+      offset = skip
+    }
 
 	max := offset + limit
 	if limit == 0 {

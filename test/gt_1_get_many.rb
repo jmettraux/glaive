@@ -81,6 +81,15 @@ class GtGetManyTest < Test::Unit::TestCase
       [ { '_rev' => 1, '_id' => 'frog2', 'type' => 'frogs' },
         { '_rev' => 1, '_id' => 'frog3', 'type' => 'frogs' } ],
       @con.get_many('frogs', :offset => 3, :limit => 2))
+
+    assert_equal(
+      [ { '_rev' => 1, '_id' => 'frog1', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog10', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :offset => 1, :limit => 2))
+    assert_equal(
+      [ { '_rev' => 1, '_id' => 'frog1', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog10', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :skip => 1, :limit => 2))
   end
 
   def test_get_many__offset_limit_and_descending
