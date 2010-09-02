@@ -44,7 +44,7 @@ class GtGetManyTest < Test::Unit::TestCase
       @con.get_many('frogs', %w[ frog2 frog4 frog7 ]).collect { |h| h['_id'] })
   end
 
-  def test_get_many_descending
+  def test_get_many__descending
 
     load_frogs
 
@@ -53,13 +53,44 @@ class GtGetManyTest < Test::Unit::TestCase
       @con.get_many('frogs', :descending => true).collect { |f| f['_id'] })
   end
 
-  def test_get_many_skip
+  def test_get_many__offset
 
     load_frogs
 
     assert_equal(
-      [],
-      @con.get_many('frogs', :skip => 9))
+      [ { '_rev' => 1, '_id' => 'frog8', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog9', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :offset => 9))
+  end
+
+  def test_get_many__limit
+
+    load_frogs
+
+    assert_equal(
+      [ { '_rev' => 1, '_id' => 'frog0', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog1', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :limit => 2))
+  end
+
+  def test_get_many__offset_and_limit
+
+    load_frogs
+
+    assert_equal(
+      [ { '_rev' => 1, '_id' => 'frog2', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog3', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :offset => 3, :limit => 2))
+  end
+
+  def test_get_many__offset_limit_and_descending
+
+    load_frogs
+
+    assert_equal(
+      [ { '_rev' => 1, '_id' => 'frog6', 'type' => 'frogs' },
+        { '_rev' => 1, '_id' => 'frog5', 'type' => 'frogs' } ],
+      @con.get_many('frogs', :offset => 3, :limit => 2, :descending => true))
   end
 
   protected

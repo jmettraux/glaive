@@ -222,6 +222,27 @@ func (s stringSlice) reverse() (r stringSlice) {
 }
 
 //
+// an option map
+
+type optionMap map[string]string
+
+func (m optionMap) b(key string) bool {
+	value, _ := m[key]
+	return (value == "true")
+}
+
+func (m optionMap) s(key string) (v string) {
+	v, _ = m[key]
+	return
+}
+
+func (m optionMap) i(key string) int {
+	v, _ := m[key]
+	i, _ := strconv.Atoi(v)
+	return i
+}
+
+//
 // reserve and release
 
 func reserve(typ string, id string) *right {
@@ -311,15 +332,23 @@ func listIds(args []string) stringSlice {
 	return result
 }
 
-func extractOptions(args []string) (a []string, options map[string]string) {
+func extractOptions(args []string) (a []string, options optionMap) {
 
+	firstOpt := len(args)
 	a = args
-	options = make(map[string]string, len(args))
+	options = make(optionMap, len(args))
 
-	for _, v := range args {
+	for i, v := range args {
 		if j := strings.Index(v, "="); j > 0 {
 			options[v[0:j]] = v[j+1:], true
+			if i < firstOpt {
+				firstOpt = i
+			}
 		}
+	}
+
+	if firstOpt < len(args) {
+		a = args[0:firstOpt]
 	}
 
 	return
@@ -334,14 +363,21 @@ func doGetMany(con *net.TCPConn, args []string) {
 
 	args, options := extractOptions(args)
 
-	p(options)
-
 	ids := listIds(args)
 
-    descending, _ := options["descending"]
-    if (descending == "true") {
-      ids = ids.reverse()
-    }
+	if options.b("descending") {
+		ids = ids.reverse()
+	}
+
+	offset := options.i("offset")
+	limit := options.i("limit")
+
+	max := offset + limit
+	if limit == 0 {
+		max = len(ids)
+	}
+
+	ids = ids[offset:max]
 
 	docs := make([]interface{}, len(ids))
 	i := 0
