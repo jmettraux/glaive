@@ -208,11 +208,17 @@ func reverse(v *vector.StringVector) (r *vector.StringVector) {
 	return
 }
 
-func filter(v *vector.StringVector, f func(string)bool) (r *vector.StringVector) {
+func filter(v *vector.StringVector, f func(string)bool) *vector.StringVector {
 
-  // TODO : implement me !
+  r := new(vector.StringVector)
 
-  return v
+  for _, s := range *v {
+    if f(s) {
+      r.Push(s)
+    }
+  }
+
+  return r
 }
 
 //
@@ -291,15 +297,15 @@ func listFiles(dirname string) []string {
 	return result
 }
 
-func listIds(args []string) (r *vector.StringVector) {
+func listIds(args []string) *vector.StringVector {
 
-    r = new(vector.StringVector)
+    r := new(vector.StringVector)
 
 	if len(args) > 2 {
         for _, s := range args[1:] {
           r.Push(s)
         }
-        return
+        return r
 	}
 
 	sds := listFiles(strings.Join([]string{*dir, args[0]}, "/"))
@@ -317,18 +323,19 @@ func listIds(args []string) (r *vector.StringVector) {
 
 	sort.Sort(r)
 
-    if len(args) > 1 {
-
-        if args[1][0] == '/' {
-            // TODO : regex match here !
-        } else {
-            r = filter(r, func(id string) bool {
-                return strings.HasSuffix(id, args[1])
-            })
-        }
+    if len(args) == 1 {
+      return r
     }
 
-	return
+    if args[1][0] == '/' {
+        // TODO : regex match here !
+    } else {
+        r = filter(r, func(id string) bool {
+            return strings.HasSuffix(id, args[1])
+        })
+    }
+
+	return r
 }
 
 func extractOptions(args []string) (a []string, options optionMap) {
