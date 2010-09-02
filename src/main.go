@@ -221,6 +221,21 @@ func (s stringSlice) reverse() (r stringSlice) {
 	return
 }
 
+func (s stringSlice) filter(f func(string)bool) (r stringSlice) {
+
+  return s
+
+  //r = make(stringSlice, len(s))
+  //i := 0
+  //for _, v := range s {
+  //  if f(v) {
+  //    r[i] = v
+  //    i = i + 1
+  //  }
+  //}
+  //return
+}
+
 //
 // an option map
 
@@ -328,6 +343,16 @@ func listIds(args []string) stringSlice {
 	}
 
 	sort.Sort(result)
+
+    if len(args) > 1 {
+
+        if args[1][0] == '/' {
+        } else {
+            result = result.filter(func(id string) bool {
+                return strings.HasSuffix(id, args[1])
+            })
+        }
+    }
 
 	return result
 }

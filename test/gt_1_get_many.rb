@@ -1,3 +1,4 @@
+# encoding: utf-8
 
 require File.join(File.dirname(__FILE__), 'base.rb')
 
@@ -100,6 +101,35 @@ class GtGetManyTest < Test::Unit::TestCase
       [ { '_rev' => 1, '_id' => 'frog6', 'type' => 'frogs' },
         { '_rev' => 1, '_id' => 'frog5', 'type' => 'frogs' } ],
       @con.get_many('frogs', :offset => 3, :limit => 2, :descending => true))
+  end
+
+  def test_get_many_regex
+
+    @con.put({ 'type' => 'people', '_id' => 'john' })
+    @con.put({ 'type' => 'people', '_id' => 'jami' })
+    @con.put({ 'type' => 'people', '_id' => 'james' })
+    @con.put({ 'type' => 'people', '_id' => 'jeff' })
+    @con.put({ 'type' => 'people', '_id' => 'jeremy' })
+    @con.put({ 'type' => 'people', '_id' => 'jethro' })
+
+    assert_equal(
+      %w[ jeff jeremy jethro ],
+      @con.get_many('people', '/^je/').collect { |pe| pe['_id'] })
+  end
+
+  def test_get_many_regex_utf8
+
+    @con.put({ 'type' => 'places', '_id' => '横浜' })
+    @con.put({ 'type' => 'places', '_id' => '品川' })
+    @con.put({ 'type' => 'places', '_id' => 'london' })
+
+    assert_equal(
+      %w[ 品川 ],
+      @con.get_many('places', '川').collect { |pe| pe['_id'] })
+
+    assert_equal(
+      %w[ 品川 ],
+      @con.get_many('places', '/川$/').collect { |pe| pe['_id'] })
   end
 
   protected
