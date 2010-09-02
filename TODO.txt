@@ -7,4 +7,5 @@
 [ ] neutralize ids
 [ ] verbose should print command (and output ?)
 [ ] get_many {type} /regex/    "/"
+[ ] get_many pagination, :skip and :limit
 

@@ -48,7 +48,10 @@ def connect
     end
 
     def get_many(type, *keys)
+      opts = keys.last.is_a?(Hash) ? keys.pop : {}
       a = [ 'get_many', type ] + keys
+      opts = opts.collect { |k, v| "#{k}=#{v}" }.join(' ')
+      a << opts if opts.length > 0
       emit(a)
     end
 

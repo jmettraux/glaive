@@ -211,6 +211,16 @@ func (s stringSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
+func (s stringSlice) reverse() (r stringSlice) {
+
+	r = make(stringSlice, len(s))
+	for i := 0; i < len(s); i++ {
+		r[i] = s[len(s)-i-1]
+	}
+
+	return
+}
+
 //
 // reserve and release
 
@@ -301,6 +311,20 @@ func listIds(args []string) stringSlice {
 	return result
 }
 
+func extractOptions(args []string) (a []string, options map[string]string) {
+
+	a = args
+	options = make(map[string]string, len(args))
+
+	for _, v := range args {
+		if j := strings.Index(v, "="); j > 0 {
+			options[v[0:j]] = v[j+1:], true
+		}
+	}
+
+	return
+}
+
 func doGetMany(con *net.TCPConn, args []string) {
 
 	if len(args) < 1 {
@@ -308,7 +332,16 @@ func doGetMany(con *net.TCPConn, args []string) {
 		return
 	}
 
+	args, options := extractOptions(args)
+
+	p(options)
+
 	ids := listIds(args)
+
+    descending, _ := options["descending"]
+    if (descending == "true") {
+      ids = ids.reverse()
+    }
 
 	docs := make([]interface{}, len(ids))
 	i := 0

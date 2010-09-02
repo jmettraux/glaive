@@ -34,9 +34,7 @@ class GtGetManyTest < Test::Unit::TestCase
 
   def test_get_many_multiple_ids
 
-    12.times do |i|
-      @con.put({ 'type' => 'frogs', '_id' => "frog#{i}" })
-    end
+    load_frogs
 
     assert_equal(
       3,
@@ -44,6 +42,33 @@ class GtGetManyTest < Test::Unit::TestCase
     assert_equal(
       %w[ frog2 frog4 frog7 ],
       @con.get_many('frogs', %w[ frog2 frog4 frog7 ]).collect { |h| h['_id'] })
+  end
+
+  def test_get_many_descending
+
+    load_frogs
+
+    assert_equal(
+      %w[ frog9 frog8 frog7 frog6 frog5 frog4 frog3 frog2 frog10 frog1 frog0 ],
+      @con.get_many('frogs', :descending => true).collect { |f| f['_id'] })
+  end
+
+  def test_get_many_skip
+
+    load_frogs
+
+    assert_equal(
+      [],
+      @con.get_many('frogs', :skip => 9))
+  end
+
+  protected
+
+  def load_frogs
+
+    11.times do |i|
+      @con.put({ 'type' => 'frogs', '_id' => "frog#{i}" })
+    end
   end
 end
 
