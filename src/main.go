@@ -34,7 +34,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"strconv"
-	"container/list"
+	"container/vector"
 	"sort"
 )
 
@@ -195,45 +195,24 @@ func writeJson(con *net.TCPConn, data interface{}) {
 }
 
 //
-// a sortable []string
+// a string vector with a few methods
 
-type stringSlice []string
+func reverse(v *vector.StringVector) (r *vector.StringVector) {
 
-func (s stringSlice) Len() int {
-	return len(s)
-}
+    r = new(vector.StringVector)
 
-func (s stringSlice) Less(i, j int) bool {
-	return s[i] < s[j]
-}
-
-func (s stringSlice) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s stringSlice) reverse() (r stringSlice) {
-
-	r = make(stringSlice, len(s))
-	for i := 0; i < len(s); i++ {
-		r[i] = s[len(s)-i-1]
-	}
+    for _, s := range *v {
+      r.Insert(0, s)
+    }
 
 	return
 }
 
-func (s stringSlice) filter(f func(string)bool) (r stringSlice) {
+func filter(v *vector.StringVector, f func(string)bool) (r *vector.StringVector) {
 
-  return s
+  // TODO : implement me !
 
-  //r = make(stringSlice, len(s))
-  //i := 0
-  //for _, v := range s {
-  //  if f(v) {
-  //    r[i] = v
-  //    i = i + 1
-  //  }
-  //}
-  //return
+  return v
 }
 
 //
@@ -312,49 +291,44 @@ func listFiles(dirname string) []string {
 	return result
 }
 
-func listIds(args []string) stringSlice {
+func listIds(args []string) (r *vector.StringVector) {
+
+    r = new(vector.StringVector)
 
 	if len(args) > 2 {
-		return args[1:]
+        for _, s := range args[1:] {
+          r.Push(s)
+        }
+        return
 	}
 
 	sds := listFiles(strings.Join([]string{*dir, args[0]}, "/"))
-
-	l := list.New()
 
 	for _, sd := range sds {
 
 		is := listFiles(strings.Join([]string{*dir, args[0], sd}, "/"))
 
 		for _, id := range is {
-			l.PushBack(id)
+            if strings.HasSuffix(id, ".json") {
+                r.Push(id[0 : len(id) - 5])
+            }
 		}
 	}
 
-	result := make(stringSlice, l.Len())
-	e := l.Front()
-
-	for i := 0; i < l.Len(); i++ {
-
-		id, _ := e.Value.(string)
-		result[i] = id[0 : len(id)-5]
-
-		e = e.Next()
-	}
-
-	sort.Sort(result)
+	sort.Sort(r)
 
     if len(args) > 1 {
 
         if args[1][0] == '/' {
+            // TODO : regex match here !
         } else {
-            result = result.filter(func(id string) bool {
+            r = filter(r, func(id string) bool {
                 return strings.HasSuffix(id, args[1])
             })
         }
     }
 
-	return result
+	return
 }
 
 func extractOptions(args []string) (a []string, options optionMap) {
@@ -391,7 +365,7 @@ func doGetMany(con *net.TCPConn, args []string) {
 	ids := listIds(args)
 
 	if options.b("descending") {
-		ids = ids.reverse()
+		ids = reverse(ids)
 	}
 
 	offset := options.i("offset")
@@ -404,15 +378,15 @@ func doGetMany(con *net.TCPConn, args []string) {
 
 	max := offset + limit
 	if limit == 0 {
-		max = len(ids)
+		max = len(*ids)
 	}
 
-	ids = ids[offset:max]
+    ids = ids.Slice(offset, max)
 
-	docs := make([]interface{}, len(ids))
+	docs := make([]interface{}, len(*ids))
 	i := 0
 
-	for _, id := range ids {
+	for _, id := range *ids {
 		doc := fetch(args[0], id)
 		if doc != nil {
 			docs[i] = doc
